@@ -1,10 +1,11 @@
 #!/usr/bin/env python
+"""Print a list of midi pitches or search for one."""
 
 import math
+from argparse import ArgumentParser
 from functools import reduce
 from itertools import starmap
 
-import sys
 
 SEMIS = [
     ['C'],
@@ -57,12 +58,12 @@ def short_info(m):
     return f"{m:4d} {name:>3s} {f:>5.0f}"
 
 
-def freq(m, concert=CONCERT):
-    return concert * 2. ** ((m - 69) / 12.)
+def freq(m):
+    return CONCERT * 2. ** ((m - 69) / 12.)
 
 
-def midi(f, concert=CONCERT):
-    m_ = 12 * math.log2(f / concert) + 69
+def midi(f):
+    m_ = 12 * math.log2(f / CONCERT) + 69
     m = int(round(m_))
     if m < 0 or m >= 128:
         raise ValueError
@@ -178,9 +179,25 @@ def print_table():
         print("".join(col))
 
 
-if __name__ == "__main__":
-    if sys.argv[1:]:
-        for arg in sys.argv[1:]:
+def get_args():
+    parser = ArgumentParser(
+        description=__doc__
+    )
+    parser.add_argument("terms", nargs="*", help="Search terms")
+    parser.add_argument("-c", "--concert", default=440., type=float,
+                        help="Concert pitch (default 440Hz)")
+    return vars(parser.parse_args())
+
+
+def main(terms, concert):
+    global CONCERT
+    CONCERT = concert
+    if terms:
+        for arg in terms:
             print_long(arg)
     else:
         print_table()
+
+
+if __name__ == "__main__":
+    main(**get_args())

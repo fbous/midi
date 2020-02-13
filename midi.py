@@ -1,0 +1,186 @@
+#!/usr/bin/env python
+
+import math
+from functools import reduce
+from itertools import starmap
+
+import sys
+
+SEMIS = [
+    ['C'],
+    ['C#', 'D\u266d'],
+    ['D'],
+    ['D#', 'E\u266d'],
+    ['E'],
+    ['F'],
+    ['F#', 'G\u266d'],
+    ['G'],
+    ['G#', 'A\u266d'],
+    ['A'],
+    ['A#', 'B\u266d'],
+    ['B']
+]
+
+GERMAN = [
+    ['C'],
+    ['Cis', 'Des'],
+    ['D'],
+    ['Dis', 'Es'],
+    ['E'],
+    ['F'],
+    ['Fis', 'Ges'],
+    ['G'],
+    ['Gis', 'As'],
+    ['A'],
+    ['Ais', 'B'],
+    ['H']
+]
+
+SUB = ['\u2080', '\u2081', '\u2082', '\u2083', '\u2084',
+       '\u2085', '\u2086', '\u2087', '\u2088', '\u2089']
+
+SUP = ['\u2070', '\u00b9', '\u00b2', '\u00b3', '\u2074',
+       '\u2075', '\u2076', '\u2077', '\u2078', '\u2079']
+
+CONCERT = 440.
+
+
+def short_info(m):
+    name, *_ = spn(m)
+    f = freq(m)
+    if m < 36:
+        return f"{m:4d} {name:>4s} {f:>5.2f}  "
+    if m < 84:
+        return f"{m:4d} {name:>3s} {f:>5.1f}  "
+    if m < 108:
+        return f"{m:4d} {name:>3s} {f:>4.0f}  "
+    return f"{m:4d} {name:>3s} {f:>5.0f}"
+
+
+def freq(m, concert=CONCERT):
+    return concert * 2. ** ((m - 69) / 12.)
+
+
+def midi(f, concert=CONCERT):
+    m_ = 12 * math.log2(f / concert) + 69
+    m = int(round(m_))
+    if m < 0 or m >= 128:
+        raise ValueError
+    cents = int(round(100 * (m_ - m)))
+    return m, cents
+
+
+def spn(m):
+    octave, semi = divmod(m - 12, 12)
+    return map(lambda x: f"{x}{octave}", SEMIS[semi])
+
+
+def ger(m):
+    if m >= 48:
+        octave, semi = divmod(m - 48, 12)
+        primes = octave * "'" if octave <= 3 else SUP[octave]
+        return map(lambda x: x.lower() + primes, GERMAN[semi])
+    if m >= 36:
+        semi = m % 12
+        return GERMAN[semi]
+
+    return ""
+
+
+def catch(*exceptions, cont=lambda x: []):
+    def decorator(fn):
+        def fn_(*args, **kwargs):
+            try:
+                return fn(*args, **kwargs)
+            except exceptions as e:
+                return cont(e)
+        return fn_
+    return decorator
+
+
+def parse_f(s: str):
+    s = s.upper()
+    if s.endswith("HZ"):
+        s = s[:-2]
+    if s.endswith("K"):
+        return 1000 * float(s[:-1])
+    return float(s)
+
+
+def parse_m(s: str):
+    m = int(s)
+    if 0 <= m < 128:
+        return m
+    raise ValueError
+
+
+def matches(key, names):
+    return reduce(lambda a, n: a or key in n, names, False)
+
+
+@catch(ValueError)
+def find_frequency(key):
+    f = parse_f(key)
+    m, c = midi(f)
+    return [(f"Frequency {key}:", m, c, f, spn(m), ger(m))]
+
+
+@catch(ValueError)
+def find_midi(key):
+    m = parse_m(key)
+    return [(f"Midi pitch {key}:", m, 0, freq(m), spn(m), ger(m))]
+
+
+def find_name(key):
+    for m in range(128):
+        names = list(spn(m))
+        if matches(key, names):
+            yield (f"SPN name {key}:", m, 0, freq(m), names, ger(m))
+    for m in range(128):
+        germans = list(ger(m))
+        if matches(key, germans):
+            yield (f"German name {key}:", m, 0, freq(m), spn(m), germans)
+
+
+def find(key):
+    def find_(finder):
+        results = finder(key)
+        return "\n".join(starmap(summarize, results))
+    return find_
+
+
+def summarize(header, m, cents, f, name, german):
+    m_ = f"MIDI pitch: {m}"
+    if cents:
+        m_ += f" + {cents} cents"
+    return "\n  ".join((
+        header, m_,
+        f"Frequency: {f:.1f} Hz",
+        f"Scientific pitch notation: {' / '.join(name)}",
+        f"German pitch name: {' / '.join(german)}",
+    ))
+
+
+def print_long(key):
+    print("\n".join(filter(bool, map(find(key), [
+        find_frequency,
+        find_midi,
+        find_name,
+    ]))))
+
+
+def print_table():
+    print("MIDI  SPN  FREQ  MIDI SPN  FREQ  MIDI SPN  FREQ  "
+          "MIDI SPN FREQ  MIDI SPN  FREQ")
+    columns = 24
+    for c in range(12, columns + 12):
+        col = (short_info(m) for m in range(c, 128, columns))
+        print("".join(col))
+
+
+if __name__ == "__main__":
+    if sys.argv[1:]:
+        for arg in sys.argv[1:]:
+            print_long(arg)
+    else:
+        print_table()

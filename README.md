@@ -25,3 +25,11 @@ ln -s ../workspace/midi/midi.py midi
  `export PATH="$PATH":"$HOME"/bin`)
 
 
+## Status
+
+This is just a first draft so far
+and some features, I envisioned,
+are still missing
+or do not work perfectly yet.
+So check for a new version from time to time,
+with a `git pull`.

@@ -23,6 +23,9 @@ ln -s ../workspace/midi/midi.py midi
 (I have the source of this project in `~/workspace/midi/`
  and my `.bashrc` has something like
  `export PATH="$PATH":"$HOME"/bin`)
+ 
+### Requirements
+python 3.6 or higher
 
 
 ## Status

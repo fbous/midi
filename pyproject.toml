@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "midi-ascii"
+version = "1.1.0"
+description = "The MIDI version of Unix' ascii: look up MIDI pitches, note names and frequencies"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+authors = [{ name = "Frederik Bous" }]
+requires-python = ">=3.6"
+keywords = ["midi", "pitch", "frequency", "music", "terminal"]
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Sound/Audio :: MIDI",
+]
+
+[project.urls]
+Homepage = "https://github.com/fbous/midi"
+Issues = "https://github.com/fbous/midi/issues"
+
+[project.scripts]
+midi = "midi:cli"
+
+[tool.setuptools]
+py-modules = ["midi"]

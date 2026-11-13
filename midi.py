@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
 """Print a list of midi pitches or search for one."""
 
 import math
@@ -199,5 +200,9 @@ def main(terms, concert):
         print_table()
 
 
-if __name__ == "__main__":
+def cli():
     main(**get_args())
+
+
+if __name__ == "__main__":
+    cli()

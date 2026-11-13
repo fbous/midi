@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "midi-ascii"
-version = "1.1.0"
-description = "The MIDI version of Unix' ascii: look up MIDI pitches, note names and frequencies"
+version = "1.2.0"
+description = "The MIDI version of Unix' ascii: look up MIDI pitches, note names (English, German, solfège) and frequencies"
 readme = "README.md"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]

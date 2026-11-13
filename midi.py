@@ -3,6 +3,8 @@
 """Print a list of midi pitches or search for one."""
 
 import math
+import re
+import unicodedata
 from argparse import ArgumentParser
 from functools import reduce
 from itertools import starmap
@@ -36,6 +38,21 @@ GERMAN = [
     ['A'],
     ['Ais', 'B'],
     ['H']
+]
+
+SOLFEGE = [
+    ['Do'],
+    ['Do#', 'R\u00e9\u266d'],
+    ['R\u00e9'],
+    ['R\u00e9#', 'Mi\u266d'],
+    ['Mi'],
+    ['Fa'],
+    ['Fa#', 'Sol\u266d'],
+    ['Sol'],
+    ['Sol#', 'La\u266d'],
+    ['La'],
+    ['La#', 'Si\u266d'],
+    ['Si']
 ]
 
 SUB = ['\u2080', '\u2081', '\u2082', '\u2083', '\u2084',
@@ -89,6 +106,18 @@ def ger(m):
     return ""
 
 
+def solfege(m):
+    # SPN octaves (middle C is Do4), not the Franco-Belgian Do3
+    octave, semi = divmod(m - 12, 12)
+    return [f"{x}{octave}" for x in SOLFEGE[semi]]
+
+
+def fold(s):
+    # case- and accent-insensitive, so "re3" finds "Ré3"
+    s = unicodedata.normalize("NFD", s)
+    return "".join(c for c in s if not unicodedata.combining(c)).casefold()
+
+
 def catch(*exceptions, cont=lambda x: []):
     def decorator(fn):
         def fn_(*args, **kwargs):
@@ -134,6 +163,8 @@ def find_midi(key):
 
 
 def find_name(key):
+    # a "b" after a letter is a flat: "Bb4", "Eb", "mib4"; no note name has one
+    key = re.sub(r"(?<=[^\W\d_])b", "\u266d", key)
     for m in range(128):
         names = list(spn(m))
         if matches(key, names):
@@ -142,6 +173,11 @@ def find_name(key):
         germans = list(ger(m))
         if matches(key, germans):
             yield (f"German name {key}:", m, 0, freq(m), spn(m), germans)
+    k = fold(key)
+    for m in range(128):
+        names = [fold(n) for n in solfege(m)]
+        if k in names or k in [n.rstrip("-0123456789") for n in names]:
+            yield (f"Solf\u00e8ge name {key}:", m, 0, freq(m), spn(m), ger(m))
 
 
 def find(key):
@@ -160,6 +196,7 @@ def summarize(header, m, cents, f, name, german):
         f"Frequency: {f:.1f} Hz",
         f"Scientific pitch notation: {' / '.join(name)}",
         f"German pitch name: {' / '.join(german)}",
+        f"Solf\u00e8ge pitch name: {' / '.join(solfege(m))}",
     ))
 
 

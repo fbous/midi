@@ -8,7 +8,7 @@ midi
 ```
 or 
 ```bash
-midi 440 C4 fis
+midi 440 C4 fis ré4
 ```
 
 Use `-c` to set a different concert pitch, e.g. `midi -c 443 A4`.
